@@ -300,18 +300,157 @@ where a.salary = b.salary and a.employee_id <> b.employee_id;
 
 select date_format(hire_date,'%d'), dayname(hire_date) from employees;
 
+-- stored procedures
+
+use assignments;
+
+-- get the details of employees working in deparment 20
+DELIMITER //
+create procedure spGetDetails(IN dept_id int)
+BEGIN
+	select * from employees where department_id = dept_id;
+END //
+DELIMITER ;
+
+call sp_GetDetails(20);
+
+DELIMITER //
+create procedure spGetTotalEmployees(OUT total_emps int)
+begin
+	select count(employee_id) into total_emps from employees;
+end //
+DELIMITER ;
+
+call spGetTotalEmployees(@total_emps);
+
+select @total_emps as total_employees;
+
+
+-- DCL
+
+-- create user test and password test
+create user 'test'@'localhost' identified by 'test';
+
+select user from mysql.user;
+
+-- grant permission to the user
+grant all privileges on new_hr.job_grades to 'test'@'localhost';
+
+show grants for 'test'@'localhost';
+
+select user();
+
+-- revoking
+revoke all privileges on new_hr.job_grades from 'test'@'localhost';
+
+
+-- grant create privileges
+grant  create on hr.* to 'test'@'localhost';
+
+
+-- grant insert privileges
+
+grant insert on hr.* to 'test'@'localhost';
+
+grant all on hr.* to 'test'@'localhost';
+
+-- TCL -- 
+/* 
+commit
+rollback
+*/
+
+/* if two people are accesing the same table and one is doing some actions
+on the table with start transaction 
+then the changes will not be visible to the other person */
+
+start transaction;
+
+select * from employees;
+
+rollback; -- commit is used incase we want to persist the changes.
+
+ /*
+	note: Any transactions using start transaction, subsequent DDL,DCL transactions will commit the previous transactions
+		because DDL, and DCL are auto commit.
+ */
+
+
+-- correlated update
+
+use new_hr;
+create table new_emp as select employee_id,first_name,department_id,job_id from employees;
+
+alter table new_emp add department_name varchar(35);
+
+update new_emp e
+set department_name = (select department_name from departments where department_id = e.department_id);
+
+select * from new_emp;
+
+-- correlated delete
+delete from new_emp e
+where job_id = (select job_id from employees where employee_id = e.employee_id and employee_id = 109);
+
+
+-- alter
+ /* using alter we can add columns, constraints (PK,FK,CHECK,U). We cannot add not null using alter */
+ 
+ -- first keyword used to add column at the first.
+ alter table new_emp add col numeric(11,2) first;
+ 
+ -- for other positions use after keyword
+ alter table new_emp add col2 int after first_name;
+ select * from new_emp;
+ 
+ -- not null 
+ alter table new_emp modify  col2 int not null; 
+
+-- rename table
+alter table new_emp rename emp_new;
+
+-- drop column
+alter table emp_new drop col;
 
 
 
 
 
+use practice;
+
+create table new_dept
+(
+	id int,
+    name varchar(25)
+);
+
+alter table new_dept add primary key(id);
+alter table new_dept modify column id int auto_increment;
+--  alter table new_dept auto_increment=1001
+insert into new_dept values(1001,'Prithivi'),(null,'Agni'),(null,'Tejas'),(null,'Trishul');
+
+select * from new_dept;
+
+alter table new_dept add column location varchar(15);
+
+update new_dept
+set location = 
+case 
+	when id = 1001 then 'Bangalore'
+	when  id = 1002 then 'chennai'
+	when id = 1003  then 'hyderabad'
+    when id = 1004 then 'delhi'
+end;
+
+alter table new_dept rename column location  to place;
+
+alter table new_dept rename dept_new;
+
+alter table dept_new modify column id int;
+alter table dept_new drop primary key;
 
 
-
-
-
-
-
+select * from new_dept;
 
 
 
